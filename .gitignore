@@ -1,0 +1,4 @@
+__pycache__/
+config.py
+api-ips.txt
+opnsenseapi.py
