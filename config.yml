@@ -1,0 +1,24 @@
+## Configuration file for google-ips.py
+## Commented lines have their default values and are already set in the script.
+## If both 'update_fw_alias' and 'create_ips_file' are disabled the newline-delimited IP list will be printed to stdout.
+
+## URLs hosting Google IPs, these should not be edited unless Google changes where they host these IP lists.
+#all_google_ips_url: https://www.gstatic.com/ipranges/goog.json ## URL hosting the main set of all publicly facing Google IPs
+#google_cloud_ips_url: https://www.gstatic.com/ipranges/cloud.json ## URL hosting the subset of Google IPs allocated to GCP customers
+
+## Variables for updating OPNsense alias; If 'update_fw_alias' is enabled 'fw_url', 'fw_api_key', and 'fw_api_secret' must be set.
+## When creating an API key it is recommended to only give the key's user the permission 'Firewall: Alias: Edit' to minimize the key's access in the event that it is compromised.
+#update_fw_alias: yes ## Whether to create/update an OPNsense alias with the IP list
+fw_url: ## URL of your OPNsense firewall; A trailing slash is required
+fw_api_key: ## Your OPNsense API Key
+fw_api_secret: ## Your OPNsense API Secret
+#fw_check_cert: yes ## Verify authenticity of SSL cert on OPNsense; Must be disabled if using an expired/self signed cert
+#alias_name: Google_API_Alias ## The name of the alias to create/update in OPNsense
+
+## Logging Variables.
+#log_level: INFO ## The maximum log message level as defined in the python logging module: https://docs.python.org/3/library/logging.html
+#log_file: /tmp/google-ips.log ## The file to write log messages to; If set without a value log messages will be output to stderr instead
+
+## IP list file Variables.
+#create_ips_file: no ## Whether to write a file containing the newline-delimited IP list
+#ips_file_name: api-ips.txt ## The file to write the list of IPs to
