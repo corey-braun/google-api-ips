@@ -15,10 +15,10 @@ fw_api_secret: ## Your OPNsense API Secret
 #fw_check_cert: yes ## Verify authenticity of SSL cert on OPNsense; Must be disabled if using an expired/self signed cert
 #alias_name: Google_API_Alias ## The name of the alias to create/update in OPNsense
 
-## Logging Variables.
+## Logging Variables
 #log_level: INFO ## The maximum log message level as defined in the python logging module: https://docs.python.org/3/library/logging.html
-#log_file: /tmp/google-ips.log ## The file to write log messages to; If set without a value log messages will be output to stderr instead
+#log_file: /tmp/googleips.log ## The file to write log messages to; If set without a value log messages will be output to stderr instead
 
-## IP list file Variables.
+## IP list file Variables
 #create_ips_file: no ## Whether to write a file containing the newline-delimited IP list
-#ips_file_name: api-ips.txt ## The file to write the list of IPs to
+#ips_file_name: google-api-ips.txt ## The file to write the list of IPs to

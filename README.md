@@ -5,7 +5,7 @@ See https://support.google.com/a/answer/10026322 for more information.
 
 The list of CIDR-notation IP networks can also be printed to stdout or written to a file if you are not using OPNsense.
 
-The script uses a YAML configuration file, see the comments in `config.yml` for information on the configurable variables.
+The script uses a YAML configuration file, see the comments in `config.yml` for information on configuring the script.
 
 If using the script to update an OPNsense alias it is recommended to create the OPNsense API key on a user with only the permission "Firewall: Alias: Edit". This minimizes the damage that can be done if the key is compromised.
 

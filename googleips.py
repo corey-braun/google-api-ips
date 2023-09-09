@@ -10,8 +10,6 @@ import requests
 from netaddr import IPNetwork, IPSet
 
 def main():
-    set_config()
-    logging_setup()
     alias_ips = get_google_ips()
     if config['create_ips_file']:
         with open(config['ips_file_name'],'w+') as f:
@@ -23,15 +21,14 @@ def main():
         for i in alias_ips:
             print(i)
 
-def set_config():
-    global config
+def get_config(config_file_name='config'):
     default_config = {
-        'log_file': '/tmp/google-ips.log',
+        'log_file': '/tmp/googleips.log',
         'log_level': 'INFO',
         'all_google_ips_url': 'https://www.gstatic.com/ipranges/goog.json',
         'google_cloud_ips_url': 'https://www.gstatic.com/ipranges/cloud.json',
         'create_ips_file': False,
-        'ips_file_name': 'api-ips.txt',
+        'ips_file_name': 'google-api-ips.txt',
         'update_fw_alias': True,
         'fw_check_cert': True,
         'fw_url': None,
@@ -39,8 +36,11 @@ def set_config():
         'fw_api_secret': None,
         'alias_name': 'Google_API_Alias'
     }
-    user_config = read_yaml(f'{sys.path[0]}/config')
-    config = default_config | user_config
+    config_path = sys.path[0]
+    if len(config_path) > 0:
+        config_path += '/'
+    user_config = read_yaml(config_path + config_file_name)
+    return default_config | user_config
 
 def read_yaml(filename):
     for file in [f'{filename}.yaml', f'{filename}.yml', filename]:
@@ -84,25 +84,34 @@ def get_ip_set(url):
 
 def update_alias(ip_list):
     logging.debug("Updating firewall alias")
-    payload = {'alias':{'name':config['alias_name'],'type':'network','enabled':'1','content':"\n".join(ip_list)}}
     alias_lookup = fw_api_call('GET', f"api/firewall/alias/getAliasUUID/{config['alias_name']}")
     try:
         uuid = alias_lookup['uuid']
-        logging.debug(f"Alias '{config['alias_name']}' already exists, updating it.")
-        url = f'api/firewall/alias/setItem/{uuid}'
-        alias_action = 'updated'
-    except TypeError:
+    except (TypeError, KeyError):
         logging.debug(f"Alias '{config['alias_name']}' does not exist, creating it.")
         url = 'api/firewall/alias/addItem/'
-        alias_action = 'created'
+        alias_action = 'create'
+    else:
+        alias_content = fw_api_call('GET', f"api/firewall/alias/getItem/{uuid}")
+        current_alias_ips = [x['value'] for x in alias_content['alias']['content'].values() if x['selected'] == 1]
+        if current_alias_ips == ip_list:
+            logging.info(f"Alias '{config['alias_name']}' already up to date.")
+            sys.exit()
+        logging.debug(f"Alias '{config['alias_name']}' already exists, updating it.")
+        url = f'api/firewall/alias/setItem/{uuid}'
+        alias_action = 'update'
+        #for i in alias_content['alias']['content']:
+        #    if i['selected'] == 1:
+        #        current_alias_ips.append(i['value'])
+    payload = {'alias':{'name':config['alias_name'],'type':'network','enabled':'1','content':"\n".join(ip_list)}}
     alias_update = fw_api_call('POST', url, payload)
-    if not alias_update['result'] == 'saved':
-        err = f"Failed to {alias_action.rstrip('d')} alias '{config['alias_name']}'. API Response: {alias_update}"
-        logging.error(err)
-        sys.exit(err)
+    #if not alias_update['result'] == 'saved':
+    #    err = f"Failed to {alias_action} alias '{config['alias_name']}'. API Response: {alias_update}"
+    #    logging.error(err)
+    #    sys.exit(err)
     logging.debug("Applying alias changes.")
     alias_apply = fw_api_call('POST', 'api/firewall/alias/reconfigure')
-    logging.info(f"Alias '{config['alias_name']}' {alias_action} with {len(ip_list)} CIDR blocks.")
+    logging.info(f"Alias '{config['alias_name']}' {alias_action}d with {len(ip_list)} CIDR blocks.")
 
 def fw_api_call(http_method, api_endpoint, json_payload=None):
     try:
@@ -113,20 +122,31 @@ def fw_api_call(http_method, api_endpoint, json_payload=None):
             verify=config['fw_check_cert'],
             json=json_payload
         )
-        r_json = r.json()
         r.raise_for_status()
-        return r_json
+        try:
+            if r.json()['result'] == 'failed':
+                raise APIResponseError("API call failed.")
+        except KeyError:
+            pass
+        return r.json()
     except:
         if json_payload:
             data_err=f" with data '{json_payload}'"
         else:
             data_err=""
-        if r_json:
-            response_err=f" API Response: '{r_json}'."
-        else:
+        try:
+            response_err=f" API Response: '{r.text}'."
+        except:
             response_err=""
+            pass
         logging.exception(f"Failed to make {http_method} API call to endpoint '{api_endpoint}'{data_err}. HTTP Status Code: {r.status_code}.{response_err}")
         raise
+
+class APIResponseError(Exception):
+    pass
+
+config = get_config()
+logging_setup()
 
 if __name__ == "__main__":
     main()
