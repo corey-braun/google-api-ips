@@ -1,7 +1,8 @@
-#!/usr/bin/env python
-## https://github.com/corey-braun/google-api-ips
-## Finds IP ranges used for google APIs & services in CIDR notation, then writes them to a file and/or creates/updates OPNsense FW alias with the IPs.
-## See https://support.google.com/a/answer/10026322 for info on the Google API IP ranges this script collects.
+#!/usr/bin/env python3
+
+# https://github.com/corey-braun/google-api-ips
+# Finds IP ranges used for google APIs & services in CIDR notation, then writes them to a file and/or creates/updates OPNsense FW alias with the IPs.
+# See https://support.google.com/a/answer/10026322 for info on the Google API IP ranges this script collects.
 
 import sys
 import yaml
@@ -37,7 +38,7 @@ def get_config(config_file_name='config'):
         'alias_name': 'Google_API_Alias'
     }
     config_path = sys.path[0]
-    if len(config_path) > 0:
+    if config_path:
         config_path += '/'
     user_config = read_yaml(config_path + config_file_name)
     return default_config | user_config
@@ -63,7 +64,7 @@ def logging_setup():
     )
 
 def get_google_ips():
-    """Get list of CIDR-notation Google subnets not assigned to GCP customers (and therefore used for google's APIs and services)"""
+    """Returns list of CIDR-notation Google subnets not assigned to GCP customers (and therefore used for google's APIs and services)"""
     logging.debug('Getting Google API IPs')
     all_ips = get_ip_set(config['all_google_ips_url'])
     customer_ips = get_ip_set(config['google_cloud_ips_url'])
